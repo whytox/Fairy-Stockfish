@@ -1,0 +1,37 @@
+setoption name VariantPath value variants.ini
+setoption name UCI_Variant value Banzai
+
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves f4c1
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves f4h2
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves f4h6
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves b6a4
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves b6c8
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/8/7P/2P1K3 w - - 0 1 moves e7c8
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/1B6/7P/2P1K3 w - - 0 1 moves b6a4
+d
+position fen 2P1k3/4N3/1N5P/8/P4B2/1B6/2Q4P/2P1K3 w - - 0 1 moves b6a4
+d
+position fen 2P1k3/4N3/1N5P/8/5B2/5P2/1B5P/P3K3 w - - 0 1 moves f3f4
+d
+position fen 2P1k3/4N3/1N5P/4R3/4BB2/4PP2/1B5P/P3K3 w - - 0 1 moves e3e4
+d
+position fen 2P1k3/4N3/1N5P/4R3/4BB2/4PP2/1B5P/P3K3 w - - 0 1 moves e5e4
+d
+position fen 2P1k3/4N3/1N5P/8/5B2/8/1B5P/P3K3 w - - 0 1 moves b2a1
+d
+position fen 5k2/P2B4/6qP/8/P5b1/4B3/3P2N1/3K1QP1 w - - 0 1 moves d1d2
+d
+position fen 5k2/P2B4/6qP/8/P5b1/4B3/3P2N1/3K1QP1 w - - 0 1 moves f1d1
+d
+position fen 5k2/P2B4/6qP/8/P5b1/4B3/3P2N1/3K1QP1 w - - 0 1 moves d1d2 g6g5 g2e3
+d
+position fen 5k2/P2B4/6qP/6b1/P7/4B3/3P2N1/3K1QP1 w - - 0 1 moves f1d1
+d
+go movetime 1000
+

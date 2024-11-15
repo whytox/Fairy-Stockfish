@@ -26,16 +26,17 @@ SRCS = ffishjs.cpp benchmark.cpp bitbase.cpp bitboard.cpp endgame.cpp evaluate.c
 CXX=emcc
 CXXFLAGS += --bind -DNNUE_EMBEDDING_OFF -DNO_THREADS -std=c++17 -Wall
 
-largeboards = yes
-all = yes
-optimize = yes
+largeboards = no 
+all = no 
+optimize = no 
 debug = no
+es6 = yes
 
 ### Debugging
 ifeq ($(debug),no)
 	CXXFLAGS += -DNDEBUG -s ASSERTIONS=0 -s SAFE_HEAP=0
 else
-	CXXFLAGS += -g -s ASSERTIONS=1 -s SAFE_HEAP=1
+	CXXFLAGS += -g -s ASSERTIONS=0 -s SAFE_HEAP=1
 endif
 
 ### Optimization

@@ -1040,6 +1040,20 @@ bool Position::legal(Move m) const {
   assert(!count<KING>(us) || piece_on(square<KING>(us)) == make_piece(us, KING));
   assert(board_bb() & to);
 
+  bool is_legal_push = false;
+  if (!empty(to) && color_of(piece_on(to)) == us && enable_push()) {
+    if (is_corner(to)) return false;
+    Square push_landing_to = get_push_landing(from, to);
+    if (!is_ok(push_landing_to) || !empty(push_landing_to))
+        return false;
+      
+    if (type_of(piece_on(to)) == KING) {
+        Bitboard occupied = (type_of(m) != DROP ? pieces() ^ from : pieces()) | to;
+        
+        return !(attackers_to(push_landing_to, occupied, ~us, Bitboard(0)) & ~SquareBB[to]);
+    }
+  }
+
   // Illegal checks
   if ((!checking_permitted() || (sittuyin_promotion() && type_of(m) == PROMOTION) || (!drop_checks() && type_of(m) == DROP)) && gives_check(m))
       return false;
@@ -1268,6 +1282,7 @@ bool Position::legal(Move m) const {
       janggiCannons ^= to;
 
   // A non-king move is legal if the king is not under attack after the move.
+
   return !(attackers_to(square<KING>(us), occupied, ~us, janggiCannons) & ~SquareBB[to]);
 }
 
@@ -1345,9 +1360,17 @@ bool Position::pseudo_legal(const Move m) const {
       return false;
 
   // The destination square cannot be occupied by a friendly piece
-  if (pieces(us) & to)
+  if (color_of(piece_on(to)) == us && !enable_push())
       return false;
 
+  if (color_of(piece_on(to)) == us && enable_push()) {
+      Square push_landing_to = get_push_landing(from, to);
+      //sync_cout << "checking if push move is pseudo-legal" << sync_endl;
+      if (!is_ok(push_landing_to) || !empty(push_landing_to))
+        return false;
+  }
+
+  
   // Handle the special case of a pawn move
   if (type_of(pc) == PAWN)
   {
@@ -1519,6 +1542,7 @@ bool Position::gives_check(Move m) const {
 /// moves should be filtered out before this function is called.
 
 void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
+  //sync_cout << "\nInside do move\n" << sync_endl;
 
   assert(is_ok(m));
   assert(&newSt != st);
@@ -1555,7 +1579,9 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   Square from = from_sq(m);
   Square to = to_sq(m);
   Piece pc = moved_piece(m);
-  Piece captured = piece_on(type_of(m) == EN_PASSANT ? capture_square(to) : to);
+  bool is_push = enable_push() && !empty(to) &&  (color_of(piece_on(to)) == us);
+  Piece captured = !is_push ? piece_on(type_of(m) == EN_PASSANT ? capture_square(to) : to) : NO_PIECE;
+  Piece pushed = is_push ? piece_on(to) : NO_PIECE;
   if (to == from)
   {
       assert((type_of(m) == PROMOTION && sittuyin_promotion()) || (is_pass(m) && (pass(us) || var->wallOrMove )));
@@ -1568,6 +1594,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   assert(color_of(pc) == us);
   assert(captured == NO_PIECE || color_of(captured) == (type_of(m) != CASTLING ? them : us));
   assert(type_of(captured) != KING);
+  assert(pushed == NO_PIECE || color_of(pushed) == us);
 
   if (check_counting() && givesCheck)
       k ^= Zobrist::checks[us][st->checksRemaining[us]] ^ Zobrist::checks[us][--(st->checksRemaining[us])];
@@ -1787,6 +1814,15 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
           dp.to[0] = to;
       }
 
+      if(is_push) {
+        Square pushed_to = get_push_landing(from, to);
+        move_piece(to, pushed_to);
+        st->pushedPiece = pushed;
+        st->pushedTo = pushed_to;
+      } else {
+        st->pushedPiece = NO_PIECE;
+        st->pushedTo = SQ_NONE;
+      }
       move_piece(from, to);
   }
 
@@ -2129,7 +2165,7 @@ void Position::undo_move(Move m) {
   assert(type_of(m) == DROP || empty(from) || type_of(m) == CASTLING || is_gating(m)
          || (type_of(m) == PROMOTION && sittuyin_promotion())
          || (is_pass(m) && (pass(us) || var->wallOrMove)));
-  assert(type_of(st->capturedPiece) != KING);
+  assert(type_of(st->capturedPiece) != KING || enable_push());
 
   // Reset wall squares
   byTypeBB[ALL_PIECES] ^= st->wallSquares ^ st->previous->wallSquares;
@@ -2225,6 +2261,12 @@ void Position::undo_move(Move m) {
               remove_from_hand(!drop_loop() && st->capturedpromoted ? (st->unpromotedCapturedPiece ? ~st->unpromotedCapturedPiece
                                                                                                    : make_piece(~color_of(st->capturedPiece), promotion_pawn_type(us)))
                                                                     : ~st->capturedPiece);
+      }
+
+      if (st->pushedPiece) {
+          Square capsq = st->pushedTo;
+          assert(piece_on(capsq) != NO_PIECE);
+          put_piece(st->pushedPiece, capsq, false, NO_PIECE); // Restore the pushed piece
       }
   }
 

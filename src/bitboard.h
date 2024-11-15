@@ -529,7 +529,7 @@ inline int popcount(Bitboard b) {
 #if defined(__GNUC__)  // GCC, Clang, ICC
 
 inline Square lsb(Bitboard b) {
-  assert(b);
+  //assert(b);
 #ifdef LARGEBOARDS
   if (!(b << 64))
       return Square(__builtin_ctzll(b >> 64) + 64);

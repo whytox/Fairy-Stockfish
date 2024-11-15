@@ -62,6 +62,7 @@ struct StateInfo {
   Bitboard   checkersBB;
   Piece      unpromotedCapturedPiece;
   Piece      unpromotedBycatch[SQUARE_NB];
+
   Bitboard   promotedBycatch;
   Bitboard   demotedBycatch;
   StateInfo* previous;
@@ -70,6 +71,8 @@ struct StateInfo {
   Bitboard   checkSquares[PIECE_TYPE_NB];
   Piece      capturedPiece;
   Square     captureSquare; // when != to_sq, e.g., en passant
+  Piece      pushedPiece; // pushSquare always == to_sq
+  Square     pushedTo;    // the landing pushed piece square
   Piece      promotionPawn;
   Bitboard   nonSlidingRiders;
   Bitboard   flippedPieces;
@@ -187,6 +190,10 @@ public:
   Bitboard promoted_soldiers(Color c) const;
   bool makpong() const;
   EnclosingRule flip_enclosed_pieces() const;
+  
+  bool enable_push() const;  // Banzai: Push Rule Implementation
+  //Square  
+
   // winning conditions
   int n_move_rule() const;
   int n_fold_rule() const;
@@ -280,6 +287,12 @@ public:
   Piece moved_piece(Move m) const;
   Piece captured_piece() const;
   const std::string piece_to_partner() const;
+  bool is_push(Move m) const;
+  Square get_push_landing(const Square from, const Square to) const;
+  Direction get_push_direction(const Square from, const Square to) const;
+  bool is_on_border(Square sq) const;
+  bool is_diagonal(Direction dir) const;
+  Direction get_bounce_direction(Direction dir, Square sq) const;
 
   // Piece specific
   bool pawn_passed(Color c, Square s) const;
@@ -833,6 +846,11 @@ inline Bitboard Position::promoted_soldiers(Color c) const {
 inline bool Position::makpong() const {
   assert(var != nullptr);
   return var->makpongRule;
+}
+
+inline bool Position::enable_push() const { // Banzai: Push RULE
+  assert(var != nullptr);  // Assicura che la variabile var non sia un puntatore nullo
+  return var->enablePush;  // Restituisce il valore di enablePush dalla struttura Variant
 }
 
 inline int Position::n_move_rule() const {
@@ -1418,6 +1436,65 @@ inline const std::string Position::piece_to_partner() const {
       (st->unpromotedCapturedPiece ? st->unpromotedCapturedPiece : make_piece(color, promotion_pawn_type(color))) :
       st->capturedPiece;
   return std::string(1, piece_to_char()[piece]);
+}
+
+inline bool Position::is_push(Move m) const {
+  return color_of(piece_on(to_sq(m))) == color_of(piece_on(from_sq(m)));
+}
+
+
+inline Square Position::get_push_landing(const Square from, const Square to) const {
+  Direction push_direction = get_push_direction(from, to);
+  if (is_diagonal(push_direction) && is_on_border(to)) {
+    Direction bounce_direction = get_bounce_direction(push_direction, to);
+    return to + bounce_direction;
+  }
+  return to + push_direction;
+}
+
+
+inline Direction Position::get_push_direction(const Square from, const Square to) const {
+  // Calcola la differenza di file e rank
+    int file_diff = file_of(to) - file_of(from);
+    int rank_diff = rank_of(to) - rank_of(from);
+    File to_file = file_of(to);
+    Rank to_rank = rank_of(to);
+
+    if (file_diff == 0) {
+        // Mossa verticale
+        return rank_diff < 0 ? SOUTH : NORTH;
+    } 
+    if (rank_diff == 0) {
+        // Mossa orizzontale
+        return file_diff > 0 ? EAST : WEST;
+    } 
+    else {
+        // Mossa diagonale (compresi i movimenti a cavallo)
+        if (file_diff > 0 && rank_diff < 0) return SOUTH_EAST;  // diagonale in basso a destra
+        if (file_diff > 0 && rank_diff > 0) return NORTH_EAST;  // diagonale in alto a destra
+        if (file_diff < 0 && rank_diff < 0) return SOUTH_WEST;  // diagonale in basso a sinistra
+        if (file_diff < 0 && rank_diff > 0) return NORTH_WEST;  // diagonale in alto a sinistra
+    }
+}
+
+inline bool Position::is_diagonal(Direction dir) const {
+  return dir == SOUTH_EAST || dir == NORTH_EAST || dir == SOUTH_WEST || dir == NORTH_WEST;
+}
+
+inline bool Position::is_on_border(Square sq) const {
+  File sq_file = file_of(sq);
+  Rank sq_rank = rank_of(sq);
+  return sq_rank == RANK_1 || sq_rank == RANK_8 || sq_file == FILE_A || sq_file == FILE_H;
+}
+
+inline Direction Position::get_bounce_direction(Direction dir, Square sq) const {
+  File sq_file = file_of(sq);
+  Rank sq_rank = rank_of(sq); 
+
+  if (sq_rank == RANK_8) return dir == NORTH_EAST ? SOUTH_EAST : SOUTH_WEST;
+  if (sq_rank == RANK_1) return dir == SOUTH_EAST ? NORTH_EAST : NORTH_WEST;
+  if (sq_file == FILE_A) return dir == NORTH_WEST ? NORTH_EAST : SOUTH_EAST; 
+  if (sq_file == FILE_H) return dir == NORTH_EAST ? NORTH_WEST : SOUTH_WEST;
 }
 
 inline Thread* Position::this_thread() const {

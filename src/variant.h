@@ -120,6 +120,8 @@ struct Variant {
   EnclosingRule flipEnclosedPieces = NO_ENCLOSING;
   bool freeDrops = false;
 
+  bool enablePush = false;  // Banzai: Nuova variabile per abilitare la variante di spinta
+
   // game end
   PieceSet nMoveRuleTypes[COLOR_NB] = {piece_set(PAWN), piece_set(PAWN)};
   int nMoveRule = 50;

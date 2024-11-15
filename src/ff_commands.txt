@@ -1,0 +1,18 @@
+setoption name VariantPath value variants.ini
+setoption name UCI_Variant value Banzai
+position startpos moves h1h3
+d
+position startpos moves d1d2
+d
+position startpos moves c1b2
+d
+position startpos moves f1g2
+d
+position startpos moves b1d2
+d
+position startpos moves b2b3 h7h6 c1b2
+d
+position startpos moves b1a3 h7h6 d1d2 h6h5 a3c2
+d
+position startpos moves b1a3 h7h6 d1d2 h6h5 a3c2 h5h4 a2a3 a7a6 c2a3
+d

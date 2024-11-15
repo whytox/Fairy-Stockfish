@@ -270,6 +270,7 @@ enum MoveType : int {
   PIECE_PROMOTION    = 5 << (2 * SQUARE_BITS),
   PIECE_DEMOTION     = 6 << (2 * SQUARE_BITS),
   SPECIAL            = 7 << (2 * SQUARE_BITS),
+  //PUSH               = 8 << (2 * SQUARE_BITS),
 };
 
 constexpr int MOVE_TYPE_BITS = 4;
@@ -523,6 +524,9 @@ enum Square : int {
   SQUARE_NB_SHOGI = 81,
 };
 
+inline Square BOARD_CORNERS[4] = {SQ_A1, SQ_A8, SQ_H1, SQ_H8};
+
+
 enum Direction : int {
 #ifdef LARGEBOARDS
   NORTH =  12,
@@ -758,6 +762,10 @@ constexpr bool is_ok(Square s) {
   return s >= SQ_A1 && s <= SQ_MAX;
 }
 
+constexpr bool is_corner(Square sq) {
+  return std::find(std::begin(BOARD_CORNERS), std::end(BOARD_CORNERS), sq) != std::end(BOARD_CORNERS);
+}
+
 constexpr File file_of(Square s) {
   return File(s % FILE_NB);
 }
@@ -813,6 +821,7 @@ inline Square gating_square(Move m) {
 inline bool is_gating(Move m) {
   return gating_type(m) && (type_of(m) == NORMAL || type_of(m) == CASTLING);
 }
+
 
 inline bool is_pass(Move m) {
   return type_of(m) == SPECIAL && from_sq(m) == to_sq(m);
